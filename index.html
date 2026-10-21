@@ -1,0 +1,325 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Loopa.ai has shut down</title>
+<meta name="description" content="After several years of building, we've shut down Loopa.ai. Here is what we built, why it didn't work out, and what we'd do differently.">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Loopa.ai has shut down">
+<meta property="og:description" content="What we built, why it didn't work out, and what we'd tell other founders.">
+<meta property="og:url" content="https://loopa.ai/">
+<meta name="twitter:card" content="summary">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230c111f'/%3E%3Ccircle cx='16' cy='16' r='8' fill='none' stroke='%238b7bff' stroke-width='3'/%3E%3Ccircle cx='16' cy='16' r='2.5' fill='%233fd8ea'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500&family=IBM+Plex+Sans:ital,wght@0,400;0,500;1,400&family=Sora:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0c111f;
+    --panel: #141a2d;
+    --line: #262e49;
+    --text: #e8ecf7;
+    --muted: #a0aac6;
+    --accent: #8b7bff;
+    --cyan: #3fd8ea;
+    --amber: #ffb454;
+    --head: "Sora", system-ui, sans-serif;
+    --body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+    --mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  }
+
+  * { box-sizing: border-box; }
+
+  html { -webkit-text-size-adjust: 100%; }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font: 400 1.0625rem/1.75 var(--body);
+  }
+
+  a {
+    color: var(--cyan);
+    text-underline-offset: 3px;
+    text-decoration-thickness: 1px;
+  }
+  a:hover { color: #8ae9f4; }
+  a:focus-visible,
+  .brand:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 3px;
+    border-radius: 3px;
+  }
+
+  .wrap {
+    width: 100%;
+    max-width: 68rem;
+    margin: 0 auto;
+    padding: 0 1.25rem;
+  }
+
+  /* ---------- header ---------- */
+  .top {
+    padding: 1.5rem 0 0;
+  }
+  .brand {
+    display: inline-flex;
+    align-items: center;
+    gap: .6rem;
+    font: 600 1.15rem/1 var(--head);
+    color: var(--text);
+    text-decoration: none;
+    letter-spacing: -.01em;
+  }
+  .brand svg { display: block; }
+
+  /* ---------- hero ---------- */
+  .hero {
+    display: grid;
+    grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
+    gap: 3.5rem;
+    align-items: center;
+    padding: 4rem 0 4.5rem;
+  }
+  h1 {
+    margin: 0 0 1.5rem;
+    font: 700 clamp(2.4rem, 5.2vw, 3.9rem)/1.05 var(--head);
+    letter-spacing: -.03em;
+  }
+  .lede {
+    margin: 0;
+    max-width: 34rem;
+    font-size: 1.15rem;
+    color: var(--muted);
+  }
+
+  /* the "camera feed" */
+  .scene {
+    position: relative;
+    aspect-ratio: 4 / 3;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background-color: #0a0f1c;
+    background-image:
+      linear-gradient(var(--line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--line) 1px, transparent 1px);
+    background-size: 12.5% 16.66%;
+    background-position: -1px -1px;
+    overflow: hidden;
+  }
+  .scene::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(0deg, rgba(0,0,0,.18) 0 1px, transparent 1px 4px);
+    pointer-events: none;
+  }
+  .hud {
+    position: absolute;
+    left: 0; right: 0; top: 0;
+    display: flex;
+    justify-content: space-between;
+    padding: .7rem .9rem;
+    font: 500 .78rem/1 var(--mono);
+    color: var(--muted);
+    z-index: 2;
+  }
+  .hud .lost { color: var(--amber); display: inline-flex; align-items: center; gap: .45rem; }
+  .hud .lost::before {
+    content: "";
+    width: .5rem; height: .5rem;
+    border-radius: 50%;
+    background: var(--amber);
+    animation: blink 1.6s steps(1, end) infinite;
+  }
+  .det {
+    position: absolute;
+    border: 1.5px solid var(--cyan);
+    opacity: 0;
+    animation: appear .35s ease-out forwards;
+    animation-delay: calc(var(--i) * .4s + .4s);
+    z-index: 1;
+  }
+  .det b {
+    position: absolute;
+    left: -1.5px;
+    bottom: 100%;
+    padding: .12rem .45rem;
+    background: var(--cyan);
+    color: #04202a;
+    font: 500 .72rem/1.3 var(--mono);
+    white-space: nowrap;
+  }
+  .det.status {
+    inset: 18% 5% 6% 5%;
+    border: 1.5px dashed var(--amber);
+    animation-delay: 2.4s;
+  }
+  .det.status b {
+    background: var(--amber);
+    color: #2b1900;
+  }
+
+  @keyframes appear { to { opacity: 1; } }
+  @keyframes blink { 50% { opacity: .2; } }
+
+  /* ---------- story ---------- */
+  main {
+    border-top: 1px solid var(--line);
+    padding: 3.5rem 0 4rem;
+  }
+  .story { max-width: 40rem; }
+  .story > section + section { margin-top: 3.5rem; }
+
+  h2 {
+    margin: 0 0 1.25rem;
+    font: 600 clamp(1.6rem, 3vw, 2rem)/1.2 var(--head);
+    letter-spacing: -.02em;
+  }
+  h3 {
+    margin: 2.25rem 0 .6rem;
+    font: 600 1.2rem/1.35 var(--head);
+    letter-spacing: -.01em;
+  }
+  h2 + h3 { margin-top: 1.5rem; }
+  p { margin: 0 0 1.1rem; }
+  .story p:last-child { margin-bottom: 0; }
+
+  blockquote {
+    margin: 1.4rem 0;
+    padding: .15rem 0 .15rem 1.2rem;
+    border-left: 3px solid var(--accent);
+    font-size: 1.12rem;
+  }
+  blockquote p { margin: 0; }
+
+  /* the three quotes are the only place we let the layout breathe differently */
+  .quotes blockquote:nth-of-type(2) { border-left-color: var(--cyan); }
+  .quotes blockquote:nth-of-type(3) { border-left-color: var(--amber); }
+
+  footer {
+    border-top: 1px solid var(--line);
+    padding: 1.75rem 0 2.5rem;
+    color: var(--muted);
+    font-size: .95rem;
+  }
+
+  /* ---------- small screens ---------- */
+  @media (max-width: 52rem) {
+    .hero {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 2.5rem;
+      padding: 2.5rem 0 3rem;
+    }
+    .scene { order: -1; }
+    main { padding: 2.5rem 0 3rem; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .det { animation: none; opacity: 1; }
+    .hud .lost::before { animation: none; }
+  }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap">
+    <a class="brand" href="/" aria-label="Loopa.ai">
+      <svg width="26" height="26" viewBox="0 0 32 32" aria-hidden="true">
+        <circle cx="16" cy="16" r="10" fill="none" stroke="#8b7bff" stroke-width="3"/>
+        <circle cx="16" cy="16" r="3" fill="#3fd8ea"/>
+      </svg>
+      Loopa.ai
+    </a>
+  </div>
+</header>
+
+<div class="wrap">
+  <section class="hero">
+    <div>
+      <h1>Loopa.ai has shut down</h1>
+      <p class="lede">After several years of building, we've made the hard decision to shut down Loopa.ai. I want to share what we built, why it didn't work out, and what I'd do differently, in the hope that it helps other founders.</p>
+    </div>
+
+    <div class="scene" role="img" aria-label="Illustration of a security camera feed with detection boxes labeled helmet, person, dog and courier, framed by a dashed box reading shut down.">
+      <div class="hud" aria-hidden="true">
+        <span>CAM 01</span>
+        <span class="lost">signal lost</span>
+      </div>
+      <div class="det" style="--i:0; left:14%; top:34%; width:13%; height:11%;" aria-hidden="true"><b>helmet 0.98</b></div>
+      <div class="det" style="--i:1; left:12%; top:46%; width:22%; height:40%;" aria-hidden="true"><b>person 0.99</b></div>
+      <div class="det" style="--i:2; left:48%; top:68%; width:18%; height:15%;" aria-hidden="true"><b>dog 0.91</b></div>
+      <div class="det" style="--i:3; left:68%; top:42%; width:20%; height:40%;" aria-hidden="true"><b>courier 0.94</b></div>
+      <div class="det status" aria-hidden="true"><b>loopa.ai: shut down</b></div>
+    </div>
+  </section>
+</div>
+
+<main>
+  <div class="wrap">
+    <div class="story">
+
+      <section>
+        <h2>What was Loopa.ai?</h2>
+        <p>Loopa.ai turned the security cameras businesses already had into a source of real-time insights and alerts.</p>
+        <p>Picture yourself running a 10-story construction site, where you constantly need to check that every worker is wearing a helmet and protective gear. Or running a restaurant, keeping an eye out for dogs using your garden as a bathroom. Or managing a warehouse, watching for break-ins and theft.</p>
+        <p>Nobody has time to sit in front of camera feeds all day waiting for these moments. Nobody except AI, that is.</p>
+      </section>
+
+      <section class="quotes">
+        <h2>Customers loved it</h2>
+        <p>The feedback from our beta customers was what kept us going:</p>
+        <blockquote><p>“Where was this last year? I used to spend three hours a day going through old footage.”</p></blockquote>
+        <blockquote><p>“Wow, now I can see exactly how many people walk into my restaurant, and how many of them are Uber Eats couriers?”</p></blockquote>
+        <blockquote><p>“One person without a helmet can cost me $2,000 in fines. If you can catch them, I'll be the happiest person here.”</p></blockquote>
+      </section>
+
+      <section>
+        <h2>So why did we shut down?</h2>
+
+        <h3>1. Love costs money</h3>
+        <p>Robert De Niro once said <a href="https://www.youtube.com/watch?v=0KJ7l4gy4oo&amp;t=110s" target="_blank" rel="noopener">“In Vegas, love costs money.”</a> Little did he know the same applies to AI startups. Customers loved the idea, but making it work was expensive. Running AI on video is extremely resource-intensive: models have to sift through hours of footage to find a single edge-case event, and our cloud bills showed it.</p>
+        <p>We were constantly trading costs against accuracy. Lower the video quality and costs dropped, but so did accuracy. We swung back and forth between “too expensive” and “too inaccurate” and never found a sweet spot that worked.</p>
+
+        <h3>2. The great wall of IT</h3>
+        <p>Operations and business teams loved us. IT teams did not. To operations we were a lifesaver; to IT we were extra work, new security risks and GDPR questions, all for a benefit they didn't see or maybe saw but did not understand.</p>
+        <p>The result: we had a handful of pilot customers with small use cases, and some even paid us. But turning those pilots into full deployments with meaningful annual contracts was taking far longer than we could sustain.</p>
+
+        <h3>3. We wore ourselves out</h3>
+        <p>Months of “almost yes,” but never a firm yes, took their toll. We were all product people and engineers, and neither of us was an A+ salesperson. I'd call myself reasonably good at sales: I got businesses to pay a couple of founders with no product and no investors for something that didn't exist yet. That's not nothing. But in a startup, “pretty good” isn't good enough.</p>
+        <p>Even more important than the skill is loving it. I don't mind selling, but I don't thrive on the hunt. Taking 20 NOs a day and showing up the next morning as if nothing happened isn't what energizes me, and in startup sales you have to be wired exactly that way.</p>
+      </section>
+
+      <section>
+        <h2>What I'd tell other founders</h2>
+
+        <h3>1. Find an A+ salesperson who loves selling</h3>
+        <p>Plenty of people can sell Salesforce or Google Workspace: proven products with thousands of success stories behind them. Selling a product that barely exists is a different game, and “pretty good” won't cut it. If that's not you, find that person early.</p>
+
+        <h3>2. Pick one industry for your beta</h3>
+        <p>We had customers and leads across gyms, restaurants, government, security companies, construction, grocery stores, gig-economy companies and more. I knew that wasn't ideal, but I figured a startup should take whatever it can get.</p>
+        <p>In hindsight, I'd focus on a single industry. Construction, security companies and grocery stores all looked promising. Fewer pilot customers in one industry would have let us choose a segment that could actually afford the solution and really polish our sales process for it.</p>
+
+        <h3>3. Build your sales strategy in the field, not at a desk</h3>
+        <p>This is a classic founder mistake: you get heads-down in the product and underestimate how much work sales takes. And a sales strategy isn't a PowerPoint deck, a misconception I've seen in founders and even investors. You have to go out, sell, fail, adjust and repeat. Only once you're in those meetings do you hear the real objections and tough questions, and that's what you build a winning strategy from.</p>
+        <p>It's also one more reason to focus on one industry: the objections are different in each.</p>
+      </section>
+
+      <section>
+        <h2>Thank you</h2>
+        <p>To our beta customers, advisors and everyone who supported Loopa along the way. Special thanks to all the great people at <a href="https://mobisystems.com/en-eu" target="_blank" rel="noopener">Mobisystems</a> who helped us with money, connections, office space, free muffins just to mention a few.</p>
+      </section>
+
+    </div>
+  </div>
+</main>
+
+<footer>
+  <div class="wrap">Loopa.ai, 2026</div>
+</footer>
+
+</body>
+</html>
